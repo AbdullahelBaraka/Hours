@@ -357,15 +357,28 @@
                     departmentsSet.add(row.Department);
 
                     if (!aggregatedData[dateKey]) {
-                        // Extract the numeric day (e.g., "1/12/2025" -> 1)
-                        const dayString = row.Date.split('/')[0];
-                        const dayNumber = parseInt(dayString, 10);
+                        
+                        // Robustly extract the numeric day for sorting.
+                        let dayNumber = NaN;
+                        const dateString = row.Date;
+                        const separator = dateString.includes('-') ? '-' : (dateString.includes('/') ? '/' : null);
+                        
+                        if (separator) {
+                            const parts = dateString.split(separator);
+                            if (parts.length === 3) {
+                                // Assume YYYY-MM-DD (day is index 2) if '-' is used (matching visual output)
+                                // Assume D/M/Y (day is index 0) if '/' is used (matching a common CSV format)
+                                const dayIndex = (separator === '-') ? 2 : 0;
+                                dayNumber = parseInt(parts[dayIndex], 10);
+                            }
+                        }
 
+                        // Use the successfully extracted dayNumber for sorting
                         aggregatedData[dateKey] = {
                             date: row.Date,
                             dayName: row.DayName,
                             department: row.Department,
-                            dayNumber: dayNumber, // <-- Added day number for sorting
+                            dayNumber: dayNumber, 
                             staff: { consultants: [], specialists: [], residents: [] }
                         };
                     }
