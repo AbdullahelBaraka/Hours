@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Department Daily Clinics Viewer</title>
+    <!-- Load Tailwind CSS for utility classes and quick responsiveness -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter font for clean typography -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f7f9; /* Light gray background */
+        }
+        .header-bar {
+            background-color: #ffffff; /* White background for the main container */
+            border-bottom: 1px solid #e5e7eb;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .app-title {
+            font-weight: 800;
+            font-size: 1.8rem;
+            color: #1f2937;
+        }
+        .card-container {
+            background-color: #ffffff;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+            cursor: pointer;
+            transition: box-shadow 0.2s ease-in-out;
+            overflow: hidden; /* Important for the detail content */
+        }
+        .card-container:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        /* Collapsed Header Styles */
+        .card-header {
+            display: grid;
+            grid-template-columns: 1.5fr 3fr 1fr; /* Adjust for responsiveness */
+            align-items: center;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #f3f4f6;
+            transition: background-color 0.2s;
+        }
+
+        .date-section {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .count-section {
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+            border-left: 1px solid #f3f4f6;
+            border-right: 1px solid #f3f4f6;
+        }
+        .count-item > div:first-child {
+            color: #6b7280;
+            font-size: 0.8rem;
+        }
+        .count-item > div:last-child {
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: #10b981; /* Green color for counts */
+        }
+
+        .clinics-section {
+            text-align: right;
+        }
+        .clinics-section > div:first-child {
+            color: #6b7280;
+            font-size: 0.8rem;
+        }
+        .clinics-section > div:last-child {
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: #3b82f6; /* Blue color for total clinics */
+        }
+
+        /* Expanded Detail Styles (Accordion Effect) */
+        .detail-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.86, 0, 0.07, 1); /* Custom smooth transition */
+            padding: 0 1.5rem;
+            background-color: #f9fafb;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .card-container.expanded .detail-content {
+            max-height: 1000px; /* Large enough value to cover content */
+            padding: 1.5rem;
+        }
+
+        .staff-detail-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            padding-top: 0.5rem;
+        }
+
+        .staff-category h3 {
+            font-weight: 600;
+            font-size: 1.125rem;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 0.5rem;
+            margin-bottom: 0.5rem;
+            color: #4b5563;
+        }
+        .staff-category .list-count {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-left: 0.5rem;
+        }
+
+        .staff-entry {
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            background-color: #ffffff;
+            border-radius: 0.375rem;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .staff-entry .name {
+            font-weight: 700;
+            color: #1f2937;
+            font-size: 1rem;
+        }
+
+        .staff-entry .contract {
+            font-size: 0.8rem;
+            color: #6b7280;
+            margin-top: 0.125rem;
+        }
+
+        .staff-entry .clinics-opened {
+            font-weight: 600;
+            color: #3b82f6;
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        /* Mobile adjustments */
+        @media (max-width: 768px) {
+            .card-header {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+                text-align: left;
+            }
+            .count-section {
+                justify-content: space-between;
+                border-left: none;
+                border-right: none;
+                padding-top: 0.5rem;
+                padding-bottom: 0.5rem;
+                border-top: 1px dashed #e5e7eb;
+                border-bottom: 1px dashed #e5e7eb;
+            }
+            .clinics-section {
+                text-align: left;
+            }
+            .staff-detail-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <header class="header-bar p-4 mb-6 sticky top-0 z-10 rounded-lg">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <h1 class="app-title">Medical Department Daily Clinics Viewer</h1>
+            <div>
+                <select id="department-select" class="p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    <!-- Options will be added by JS after loading data -->
+                </select>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto">
+        <div id="schedule-list">
+            <!-- Daily schedule cards will be injected here -->
+            <p id="loading-message" class="text-center text-gray-500 mt-10">Loading schedule data from data.csv...</p>
+        </div>
+    </main>
+
+    <script>
+        // Global variable to hold the processed and aggregated schedule data
+        let scheduleData = [];
+
+        // Utility to calculate totals for the collapsed view
+        const calculateTotals = (day) => {
+            const staff = day.staff;
+            const consultantCount = staff.consultants.length;
+            const specialistCount = staff.specialists.length;
+            const residentCount = staff.residents.length;
+
+            const allStaff = [...staff.consultants, ...staff.specialists, ...staff.residents];
+            const totalClinics = allStaff.reduce((sum, s) => sum + s.clinics, 0); 
+
+            return { consultantCount, specialistCount, residentCount, totalClinics };
+        };
+
+        // Utility to generate HTML for detailed staff list
+        const renderStaffList = (staffArray, title) => {
+            const staffListHtml = staffArray.map(staff => `
+                <div class="staff-entry">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-grow">
+                            <div class="name">${staff.name}</div>
+                            <div class="contract">${staff.contract} &bull; ${staff.hours} hrs</div>
+                        </div>
+                        <div class="text-right flex-shrink-0 ml-4">
+                            <div class="text-xs text-gray-500">Opened clinics</div>
+                            <div class="clinics-opened">${staff.clinics}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            return `
+                <div class="staff-category">
+                    <h3 class="flex items-center">${title} <span class="list-count">(${staffArray.length} listed)</span></h3>
+                    ${staffListHtml || '<p class="text-sm text-gray-500 mt-2">No staff scheduled.</p>'}
+                </div>
+            `;
+        };
+
+
+        // Function to render the schedule based on the selected department
+        const renderSchedule = (department) => {
+            const scheduleList = document.getElementById('schedule-list');
+            scheduleList.innerHTML = ''; // Clear previous content
+            
+            // Filter the global data based on the selected department
+            const filteredData = scheduleData.filter(d => d.department === department);
+
+            if (filteredData.length === 0) {
+                scheduleList.innerHTML = `<p class="text-center text-gray-500 mt-10">No schedule data available for ${department} in the loaded file.</p>`;
+                return;
+            }
+
+            filteredData.forEach((day, index) => {
+                const totals = calculateTotals(day);
+                const cardId = `day-card-${index}`;
+
+                // Collapsed View HTML
+                const headerHtml = `
+                    <div class="card-header" data-card-id="${cardId}" role="button" aria-expanded="false">
+                        <!-- Left Section: Day Name and Date -->
+                        <div class="date-section">
+                            <div class="font-bold">${day.dayName}</div>
+                            <div class="text-sm font-normal text-gray-500">${day.date}</div>
+                        </div>
+
+                        <!-- Middle Section: Staff Counts -->
+                        <div class="count-section">
+                            <div class="count-item"><div>Consultants</div><div>${totals.consultantCount}</div></div>
+                            <div class="count-item"><div>Specialists</div><div>${totals.specialistCount}</div></div>
+                            <div class="count-item"><div>Residents</div><div>${totals.residentCount}</div></div>
+                        </div>
+
+                        <!-- Right Section: Total Clinics -->
+                        <div class="clinics-section">
+                            <div>Opened clinics</div>
+                            <div>${totals.totalClinics}</div>
+                        </div>
+                    </div>
+                `;
+
+                // Expanded Detail View HTML
+                const detailsHtml = `
+                    <div id="${cardId}" class="detail-content" aria-hidden="true">
+                        <div class="staff-detail-grid">
+                            ${renderStaffList(day.staff.consultants, 'Consultants')}
+                            ${renderStaffList(day.staff.specialists, 'Specialists')}
+                            ${renderStaffList(day.staff.residents, 'Residents')}
+                        </div>
+                    </div>
+                `;
+
+                const card = document.createElement('div');
+                card.className = 'card-container';
+                card.innerHTML = headerHtml + detailsHtml;
+                scheduleList.appendChild(card);
+            });
+        };
+
+        // Separate function for processing CSV text
+        function processCSV(csvText) {
+            const scheduleList = document.getElementById('schedule-list');
+            const departmentSelect = document.getElementById('department-select');
+
+            try {
+                const lines = csvText.trim().split('\n');
+                
+                // 1. Check for empty file
+                if (lines.length <= 1 || lines[0].trim() === '') {
+                    scheduleList.innerHTML = `<p class="text-center text-gray-500 mt-10">The 'data.csv' file is empty or only contains headers.</p>`;
+                    return;
+                }
+
+                // Use the first line as raw headers
+                const rawHeaders = lines[0].split(',').map(h => h.trim());
+                const dataLines = lines.slice(1);
+
+                const aggregatedData = {};
+                const departmentsSet = new Set();
+                
+                // Define a mapping from the user's new CSV headers (lowercase, trimmed) to the app's internal object properties
+                const headerMap = {
+                    'department': 'Department',
+                    'date': 'Date',
+                    'dayname': 'DayName',
+                    'role': 'StaffType', // 'role' in CSV maps to 'StaffType' internally
+                    'name': 'Name',
+                    'contract': 'Contract',
+                    'hours': 'Hours',
+                    'openedclinics': 'Clinics', // 'openedClinics' in CSV maps to 'Clinics' internally
+                };
+
+                // Normalize raw headers for mapping lookup (important for case-insensitivity)
+                const normalizedHeaders = rawHeaders.map(h => h.toLowerCase());
+
+                // 2. Parse and Aggregate Data
+                dataLines.forEach(line => {
+                    // Split by comma
+                    const values = line.split(',').map(v => v.trim());
+                    
+                    if (values.length !== rawHeaders.length || values.every(v => v === "")) return; 
+                    
+                    const row = normalizedHeaders.reduce((obj, normalizedHeader, index) => {
+                        const internalKey = headerMap[normalizedHeader] || rawHeaders[index];
+                        const value = values[index];
+                        
+                        if (internalKey === 'Hours' || internalKey === 'Clinics') {
+                            obj[internalKey] = parseInt(value, 10) || 0;
+                        } else {
+                            obj[internalKey] = value;
+                        }
+                        return obj;
+                    }, {});
+
+                    const dateKey = row.Date + "_" + row.Department;
+                    departmentsSet.add(row.Department);
+
+                    if (!aggregatedData[dateKey]) {
+                        aggregatedData[dateKey] = {
+                            date: row.Date,
+                            dayName: row.DayName,
+                            department: row.Department,
+                            staff: { consultants: [], specialists: [], residents: [] }
+                        };
+                    }
+                    
+                    const staffTypeKey = row.StaffType.toLowerCase() + 's';
+                    if (aggregatedData[dateKey].staff[staffTypeKey]) {
+                         aggregatedData[dateKey].staff[staffTypeKey].push({
+                            name: row.Name,
+                            contract: row.Contract,
+                            hours: row.Hours,
+                            clinics: row.Clinics
+                        });
+                    }
+                });
+
+                scheduleData = Object.values(aggregatedData);
+                
+                // 3. Update Departments List
+                departmentSelect.innerHTML = ''; 
+
+                const sortedDepartments = Array.from(departmentsSet).sort();
+                if (sortedDepartments.length === 0) {
+                     scheduleList.innerHTML = `<p class="text-center text-gray-500 mt-10">No valid department data found in 'data.csv'. Please check the file content.</p>`;
+                     return;
+                }
+                
+                sortedDepartments.forEach((dept, index) => {
+                    const option = document.createElement('option');
+                    option.value = dept;
+                    option.textContent = dept;
+                    if (index === 0) option.selected = true; 
+                    departmentSelect.appendChild(option);
+                });
+                
+                // 4. Render the initial view
+                renderSchedule(departmentSelect.value);
+
+            } catch (error) {
+                console.error("Error parsing CSV data:", error);
+                scheduleList.innerHTML = `<p class="text-center text-red-500 mt-10">Error parsing data: Check for correct comma separation in 'data.csv'. Error: ${error.message}</p>`;
+            }
+        }
+
+
+        // Function to fetch and process CSV data from the file using XHR
+        function loadData(csvFilePath) {
+            const scheduleList = document.getElementById('schedule-list');
+            scheduleList.innerHTML = `<p id="loading-message" class="text-center text-gray-500 mt-10">Loading schedule data from data.csv...</p>`;
+
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', csvFilePath, true); // Use XHR for better local file compatibility
+            
+            xhr.onload = function() {
+                // status 200 is for server, status 0 is typical for successful local file:// requests
+                if (xhr.status === 200 || (xhr.status === 0 && xhr.responseText)) {
+                    processCSV(xhr.responseText);
+                } else {
+                    console.error(`Error loading or accessing CSV file. Status: ${xhr.status}`);
+                    scheduleList.innerHTML = `<p class="text-center text-red-500 mt-10">
+                        Failed to load 'data.csv'. Please ensure the file is in the same folder as index.html.
+                        If this fails on your local machine, try running a simple web server (e.g., in your terminal: <code>python3 -m http.server</code>).
+                    </p>`;
+                }
+            };
+            
+            xhr.onerror = function() {
+                console.error("Network or file access error during CSV load.");
+                scheduleList.innerHTML = `<p class="text-center text-red-500 mt-10">
+                    Error accessing 'data.csv'. This is often due to browser security restrictions on local files. 
+                    Suggestion: Use a local web server (e.g., 'python3 -m http.server').
+                </p>`;
+            };
+
+            xhr.send();
+        }
+
+
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // 3. Handle Card Expansion (Accordion Logic)
+            document.getElementById('schedule-list').addEventListener('click', (event) => {
+                const header = event.target.closest('.card-header');
+                if (!header) return;
+
+                const container = header.closest('.card-container');
+                const detailContent = document.getElementById(header.dataset.cardId);
+
+                // Check if already expanded
+                const isExpanded = container.classList.contains('expanded');
+
+                // Close all other expanded cards
+                document.querySelectorAll('.card-container.expanded').forEach(openCard => {
+                    if (openCard !== container) {
+                        openCard.classList.remove('expanded');
+                        openCard.querySelector('.detail-content').setAttribute('aria-hidden', 'true');
+                        openCard.querySelector('.card-header').setAttribute('aria-expanded', 'false');
+                    }
+                });
+
+                if (isExpanded) {
+                    // Collapse the current card
+                    container.classList.remove('expanded');
+                    detailContent.setAttribute('aria-hidden', 'true');
+                    header.setAttribute('aria-expanded', 'false');
+                } else {
+                    // Expand the current card
+                    container.classList.add('expanded');
+                    detailContent.setAttribute('aria-hidden', 'false');
+                    header.setAttribute('aria-expanded', 'true');
+                }
+            });
+
+            // Handle Department Selection Change
+            const departmentSelect = document.getElementById('department-select');
+            departmentSelect.addEventListener('change', (event) => {
+                renderSchedule(event.target.value);
+            });
+            
+            // Initial data load and rendering
+            loadData('data.csv');
+        });
+    </script>
+</body>
+</html>

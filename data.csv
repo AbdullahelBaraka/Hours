@@ -1,0 +1,29 @@
+department,date,dayName,role,name,contract,hours,openedClinics
+Internal Medicine,2025-11-01,Saturday,Consultant,Dr. Ayman Salah,General contract,8,2
+Internal Medicine,2025-11-01,Saturday,Specialist,Dr. Lina Mansour,Shift contract,6,1
+Internal Medicine,2025-11-01,Saturday,Resident,Dr. Omar Rafi,General contract,8,0
+,,,,,,,
+Internal Medicine,2025-11-02,Sunday,Consultant,Dr. Ayman Salah,General contract,8,1
+Internal Medicine,2025-11-02,Sunday,Consultant,Dr. Maryam Adib,Case contract,4,1
+Internal Medicine,2025-11-02,Sunday,Specialist,Dr. Lina Mansour,Shift contract,6,1
+Internal Medicine,2025-11-02,Sunday,Resident,Dr. Omar Rafi,General contract,8,1
+,,,,,,,
+Internal Medicine,2025-11-03,Monday,Consultant,Dr. Khalid Mahfouz,General contract,8,2
+Internal Medicine,2025-11-03,Monday,Specialist,Dr. Lina Mansour,Shift contract,6,1
+Internal Medicine,2025-11-03,Monday,Resident,Dr. Rami Jaber,General contract,8,0
+,,,,,,,
+Pediatrics,2025-11-01,Saturday,Consultant,Dr. Hana Sadiq,General contract,8,2
+Pediatrics,2025-11-01,Saturday,Resident,Dr. Firas Amari,General contract,8,1
+,,,,,,,
+Pediatrics,2025-11-02,Sunday,Consultant,Dr. Hana Sadiq,General contract,8,1
+Pediatrics,2025-11-02,Sunday,Specialist,Dr. Tareq Haddad,Shift contract,6,1
+Pediatrics,2025-11-02,Sunday,Resident,Dr. Sara Mansour,General contract,8,1
+,,,,,,,
+Surgery,2025-11-01,Saturday,Consultant,Dr. Yazan Khalil,Shift contract,6,2
+Surgery,2025-11-01,Saturday,Specialist,Dr. Basel Qadri,Case contract,4,1
+,,,,,,,
+ENT,2025-11-01,Saturday,Consultant,Dr. Rasha Hariri,General contract,8,1
+ENT,2025-11-02,Sunday,Consultant,Dr. Rasha Hariri,General contract,8,1
+,,,,,,,
+Orthopedics,2025-11-03,Monday,Consultant,Dr. Sami Fares,General contract,8,1
+Orthopedics,2025-11-03,Monday,Resident,Dr. Laila Younes,General contract,8,0
