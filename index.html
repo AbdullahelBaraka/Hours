@@ -240,7 +240,7 @@
             const scheduleList = document.getElementById('schedule-list');
             scheduleList.innerHTML = ''; // Clear previous content
             
-            // Filter the global data based on the selected department
+            // Filter the globally sorted data based on the selected department
             const filteredData = scheduleData.filter(d => d.department === department);
 
             if (filteredData.length === 0) {
@@ -350,26 +350,29 @@
                         return obj;
                     }, {});
 
-                    // --- START MODIFICATION: Filter by Hours > 0 ---
                     // Only process staff who have recorded working hours (> 0)
                     if (row.Hours <= 0) return;
-                    // --- END MODIFICATION ---
 
                     const dateKey = row.Date + "_" + row.Department;
                     departmentsSet.add(row.Department);
 
                     if (!aggregatedData[dateKey]) {
+                        // Extract the numeric day (e.g., "1/12/2025" -> 1)
+                        const dayString = row.Date.split('/')[0];
+                        const dayNumber = parseInt(dayString, 10);
+
                         aggregatedData[dateKey] = {
                             date: row.Date,
                             dayName: row.DayName,
                             department: row.Department,
+                            dayNumber: dayNumber, // <-- Added day number for sorting
                             staff: { consultants: [], specialists: [], residents: [] }
                         };
                     }
                     
                     const staffTypeKey = row.StaffType.toLowerCase() + 's';
                     
-                    // Push the staff member only if they are a valid type and have hours > 0 (checked above)
+                    // Push the staff member 
                     if (aggregatedData[dateKey].staff[staffTypeKey]) {
                          aggregatedData[dateKey].staff[staffTypeKey].push({
                             name: row.Name,
@@ -382,7 +385,10 @@
 
                 scheduleData = Object.values(aggregatedData);
                 
-                // 3. Update Departments List
+                // 3. Sort the aggregated data chronologically by dayNumber
+                scheduleData.sort((a, b) => a.dayNumber - b.dayNumber);
+                
+                // 4. Update Departments List
                 departmentSelect.innerHTML = ''; 
 
                 const sortedDepartments = Array.from(departmentsSet).sort();
@@ -399,7 +405,7 @@
                     departmentSelect.appendChild(option);
                 });
                 
-                // 4. Render the initial view
+                // 5. Render the initial view
                 renderSchedule(departmentSelect.value);
 
             } catch (error) {
@@ -414,13 +420,10 @@
             const scheduleList = document.getElementById('schedule-list');
             scheduleList.innerHTML = `<p id="loading-message" class="text-center text-gray-500 mt-10">Loading schedule data from data.csv...</p>`;
 
-            // Using XHR for better handling of local file:// protocol during development,
-            // though 'fetch' is the modern standard and works perfectly on web servers (like GitHub Pages).
             const xhr = new XMLHttpRequest();
             xhr.open('GET', csvFilePath, true); 
             
             xhr.onload = function() {
-                // status 200 is for server, status 0 is typical for successful local file:// requests
                 if (xhr.status === 200 || (xhr.status === 0 && xhr.responseText)) {
                     processCSV(xhr.responseText);
                 } else {
