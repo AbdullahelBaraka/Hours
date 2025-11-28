@@ -196,6 +196,7 @@
 
         // Utility to calculate totals for the collapsed view
         const calculateTotals = (day) => {
+            // Note: Staff arrays already only contain members with Hours > 0 due to filtering in processCSV
             const staff = day.staff;
             const consultantCount = staff.consultants.length;
             const specialistCount = staff.specialists.length;
@@ -214,6 +215,7 @@
                     <div class="flex justify-between items-start">
                         <div class="flex-grow">
                             <div class="name">${staff.name}</div>
+                            <!-- Displaying hours here confirms they are on duty -->
                             <div class="contract">${staff.contract} &bull; ${staff.hours} hrs</div>
                         </div>
                         <div class="text-right flex-shrink-0 ml-4">
@@ -318,11 +320,11 @@
                     'department': 'Department',
                     'date': 'Date',
                     'dayname': 'DayName',
-                    'role': 'StaffType', // 'role' in CSV maps to 'StaffType' internally
+                    'role': 'StaffType', 
                     'name': 'Name',
                     'contract': 'Contract',
                     'hours': 'Hours',
-                    'openedclinics': 'Clinics', // 'openedClinics' in CSV maps to 'Clinics' internally
+                    'openedclinics': 'Clinics', 
                 };
 
                 // Normalize raw headers for mapping lookup (important for case-insensitivity)
@@ -340,12 +342,18 @@
                         const value = values[index];
                         
                         if (internalKey === 'Hours' || internalKey === 'Clinics') {
+                            // Ensure Hours and Clinics are parsed as integers, defaulting to 0
                             obj[internalKey] = parseInt(value, 10) || 0;
                         } else {
                             obj[internalKey] = value;
                         }
                         return obj;
                     }, {});
+
+                    // --- START MODIFICATION: Filter by Hours > 0 ---
+                    // Only process staff who have recorded working hours (> 0)
+                    if (row.Hours <= 0) return;
+                    // --- END MODIFICATION ---
 
                     const dateKey = row.Date + "_" + row.Department;
                     departmentsSet.add(row.Department);
@@ -360,6 +368,8 @@
                     }
                     
                     const staffTypeKey = row.StaffType.toLowerCase() + 's';
+                    
+                    // Push the staff member only if they are a valid type and have hours > 0 (checked above)
                     if (aggregatedData[dateKey].staff[staffTypeKey]) {
                          aggregatedData[dateKey].staff[staffTypeKey].push({
                             name: row.Name,
@@ -404,8 +414,10 @@
             const scheduleList = document.getElementById('schedule-list');
             scheduleList.innerHTML = `<p id="loading-message" class="text-center text-gray-500 mt-10">Loading schedule data from data.csv...</p>`;
 
+            // Using XHR for better handling of local file:// protocol during development,
+            // though 'fetch' is the modern standard and works perfectly on web servers (like GitHub Pages).
             const xhr = new XMLHttpRequest();
-            xhr.open('GET', csvFilePath, true); // Use XHR for better local file compatibility
+            xhr.open('GET', csvFilePath, true); 
             
             xhr.onload = function() {
                 // status 200 is for server, status 0 is typical for successful local file:// requests
@@ -413,19 +425,33 @@
                     processCSV(xhr.responseText);
                 } else {
                     console.error(`Error loading or accessing CSV file. Status: ${xhr.status}`);
-                    scheduleList.innerHTML = `<p class="text-center text-red-500 mt-10">
-                        Failed to load 'data.csv'. Please ensure the file is in the same folder as index.html.
-                        If this fails on your local machine, try running a simple web server (e.g., in your terminal: <code>python3 -m http.server</code>).
-                    </p>`;
+                    scheduleList.innerHTML = `
+                        <div class="mt-10 p-6 bg-red-100 border-l-4 border-red-500 text-red-700 rounded-lg max-w-lg mx-auto">
+                            <p class="font-bold mb-2">Failed to load 'data.csv' (Load Status: ${xhr.status})</p>
+                            <p class="text-sm">
+                                This typically happens when viewing <code>index.html</code> directly on your local computer due to browser security (Same-Origin Policy).
+                            </p>
+                            <p class="text-sm font-semibold mt-2">
+                                ✅ The good news: This code WILL work perfectly once uploaded to GitHub Pages or any web server!
+                            </p>
+                        </div>
+                    `;
                 }
             };
             
             xhr.onerror = function() {
                 console.error("Network or file access error during CSV load.");
-                scheduleList.innerHTML = `<p class="text-center text-red-500 mt-10">
-                    Error accessing 'data.csv'. This is often due to browser security restrictions on local files. 
-                    Suggestion: Use a local web server (e.g., 'python3 -m http.server').
-                </p>`;
+                scheduleList.innerHTML = `
+                    <div class="mt-10 p-6 bg-red-100 border-l-4 border-red-500 text-red-700 rounded-lg max-w-lg mx-auto">
+                        <p class="font-bold mb-2">Error accessing 'data.csv'.</p>
+                        <p class="text-sm">
+                            This is often due to browser security restrictions on local files. The code will work on a web server.
+                        </p>
+                        <p class="text-sm font-semibold mt-2">
+                            Suggestion: Use a local web server (e.g., 'python3 -m http.server').
+                        </p>
+                    </div>
+                `;
             };
 
             xhr.send();
