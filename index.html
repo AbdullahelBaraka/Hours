@@ -11,10 +11,10 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f4f7f9; /* Light gray background */
+            background-color: #f4f7f9; 
         }
         .header-bar {
-            background-color: #ffffff; /* White background for the main container */
+            background-color: #ffffff; 
             border-bottom: 1px solid #e5e7eb;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
@@ -30,16 +30,15 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.08);
             cursor: pointer;
             transition: box-shadow 0.2s ease-in-out;
-            overflow: hidden; /* Important for the detail content */
+            overflow: hidden;
         }
         .card-container:hover {
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
 
-        /* Collapsed Header Styles */
         .card-header {
             display: grid;
-            grid-template-columns: 1.5fr 3fr 1fr; /* Adjust for responsiveness */
+            grid-template-columns: 1.5fr 3fr 1fr;
             align-items: center;
             padding: 1rem 1.5rem;
             border-bottom: 1px solid #f3f4f6;
@@ -66,7 +65,7 @@
         .count-item > div:last-child {
             font-weight: 700;
             font-size: 1.25rem;
-            color: #10b981; /* Green color for counts */
+            color: #10b981;
         }
 
         .clinics-section {
@@ -79,21 +78,20 @@
         .clinics-section > div:last-child {
             font-weight: 700;
             font-size: 1.25rem;
-            color: #3b82f6; /* Blue color for total clinics */
+            color: #3b82f6;
         }
 
-        /* Expanded Detail Styles (Accordion Effect) */
         .detail-content {
             max-height: 0;
             overflow: hidden;
-            transition: max-height 0.4s cubic-bezier(0.86, 0, 0.07, 1); /* Custom smooth transition */
+            transition: max-height 0.4s cubic-bezier(0.86, 0, 0.07, 1);
             padding: 0 1.5rem;
             background-color: #f9fafb;
             border-top: 1px solid #e5e7eb;
         }
 
         .card-container.expanded .detail-content {
-            max-height: 1000px; /* Large enough value to cover content */
+            max-height: 1000px;
             padding: 1.5rem;
         }
 
@@ -144,8 +142,7 @@
             margin-top: 0.5rem;
             font-size: 0.875rem;
         }
-        
-        /* Mobile adjustments */
+
         @media (max-width: 768px) {
             .card-header {
                 grid-template-columns: 1fr;
@@ -176,46 +173,36 @@
         <div class="max-w-7xl mx-auto flex justify-between items-center">
             <h1 class="app-title">Horus Schedule Analysis - December 2025</h1>
             <div>
-                <select id="department-select" class="p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                    <!-- Options will be added by JS after loading data -->
-                </select>
+                <select id="department-select" class="p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"></select>
             </div>
         </div>
     </header>
 
     <main class="max-w-7xl mx-auto">
         <div id="schedule-list">
-            <!-- Daily schedule cards will be injected here -->
             <p id="loading-message" class="text-center text-gray-500 mt-10">Loading schedule data from data.csv...</p>
         </div>
     </main>
 
     <script>
-        // Global variable to hold the processed and aggregated schedule data
         let scheduleData = [];
 
-        // Utility to calculate totals for the collapsed view
         const calculateTotals = (day) => {
-            // Note: Staff arrays already only contain members with Hours > 0 due to filtering in processCSV
             const staff = day.staff;
             const consultantCount = staff.consultants.length;
             const specialistCount = staff.specialists.length;
             const residentCount = staff.residents.length;
-
             const allStaff = [...staff.consultants, ...staff.specialists, ...staff.residents];
-            const totalClinics = allStaff.reduce((sum, s) => sum + s.clinics, 0); 
-
+            const totalClinics = allStaff.reduce((sum, s) => sum + s.clinics, 0);
             return { consultantCount, specialistCount, residentCount, totalClinics };
         };
 
-        // Utility to generate HTML for detailed staff list
         const renderStaffList = (staffArray, title) => {
             const staffListHtml = staffArray.map(staff => `
                 <div class="staff-entry">
                     <div class="flex justify-between items-start">
                         <div class="flex-grow">
                             <div class="name">${staff.name}</div>
-                            <!-- Displaying hours here confirms they are on duty -->
                             <div class="contract">${staff.contract} &bull; ${staff.hours} hrs</div>
                         </div>
                         <div class="text-right flex-shrink-0 ml-4">
@@ -234,17 +221,19 @@
             `;
         };
 
-
-        // Function to render the schedule based on the selected department
         const renderSchedule = (department) => {
             const scheduleList = document.getElementById('schedule-list');
-            scheduleList.innerHTML = ''; // Clear previous content
-            
-            // Filter the globally sorted data based on the selected department
-            const filteredData = scheduleData.filter(d => d.department === department);
+            scheduleList.innerHTML = '';
+
+            let filteredData = scheduleData.filter(d => d.department === department);
+
+            /*  ✅ FIX ADDED HERE  
+                Sort days by dayNumber inside each department 
+            */
+            filteredData.sort((a, b) => a.dayNumber - b.dayNumber);
 
             if (filteredData.length === 0) {
-                scheduleList.innerHTML = `<p class="text-center text-gray-500 mt-10">No schedule data available for ${department} in the loaded file.</p>`;
+                scheduleList.innerHTML = `<p class="text-center text-gray-500 mt-10">No schedule data available for ${department}.</p>`;
                 return;
             }
 
@@ -252,23 +241,19 @@
                 const totals = calculateTotals(day);
                 const cardId = `day-card-${index}`;
 
-                // Collapsed View HTML
                 const headerHtml = `
                     <div class="card-header" data-card-id="${cardId}" role="button" aria-expanded="false">
-                        <!-- Left Section: Day Name and Date -->
                         <div class="date-section">
                             <div class="font-bold">${day.dayName}</div>
                             <div class="text-sm font-normal text-gray-500">${day.date}</div>
                         </div>
 
-                        <!-- Middle Section: Staff Counts -->
                         <div class="count-section">
                             <div class="count-item"><div>Consultants</div><div>${totals.consultantCount}</div></div>
                             <div class="count-item"><div>Specialists</div><div>${totals.specialistCount}</div></div>
                             <div class="count-item"><div>Residents</div><div>${totals.residentCount}</div></div>
                         </div>
 
-                        <!-- Right Section: Total Clinics -->
                         <div class="clinics-section">
                             <div>Opened clinics</div>
                             <div>${totals.totalClinics}</div>
@@ -276,7 +261,6 @@
                     </div>
                 `;
 
-                // Expanded Detail View HTML
                 const detailsHtml = `
                     <div id="${cardId}" class="detail-content" aria-hidden="true">
                         <div class="staff-detail-grid">
@@ -294,55 +278,45 @@
             });
         };
 
-        // Separate function for processing CSV text
         function processCSV(csvText) {
             const scheduleList = document.getElementById('schedule-list');
             const departmentSelect = document.getElementById('department-select');
 
             try {
                 const lines = csvText.trim().split('\n');
-                
-                // 1. Check for empty file
                 if (lines.length <= 1 || lines[0].trim() === '') {
                     scheduleList.innerHTML = `<p class="text-center text-gray-500 mt-10">The 'data.csv' file is empty or only contains headers.</p>`;
                     return;
                 }
 
-                // Use the first line as raw headers
                 const rawHeaders = lines[0].split(',').map(h => h.trim());
                 const dataLines = lines.slice(1);
 
                 const aggregatedData = {};
                 const departmentsSet = new Set();
-                
-                // Define a mapping from the user's new CSV headers (lowercase, trimmed) to the app's internal object properties
+
                 const headerMap = {
                     'department': 'Department',
                     'date': 'Date',
                     'dayname': 'DayName',
-                    'role': 'StaffType', 
+                    'role': 'StaffType',
                     'name': 'Name',
                     'contract': 'Contract',
                     'hours': 'Hours',
-                    'openedclinics': 'Clinics', 
+                    'openedclinics': 'Clinics'
                 };
 
-                // Normalize raw headers for mapping lookup (important for case-insensitivity)
                 const normalizedHeaders = rawHeaders.map(h => h.toLowerCase());
 
-                // 2. Parse and Aggregate Data
                 dataLines.forEach(line => {
-                    // Split by comma
                     const values = line.split(',').map(v => v.trim());
-                    
-                    if (values.length !== rawHeaders.length || values.every(v => v === "")) return; 
-                    
+                    if (values.length !== rawHeaders.length || values.every(v => v === "")) return;
+
                     const row = normalizedHeaders.reduce((obj, normalizedHeader, index) => {
                         const internalKey = headerMap[normalizedHeader] || rawHeaders[index];
                         const value = values[index];
-                        
+
                         if (internalKey === 'Hours' || internalKey === 'Clinics') {
-                            // Ensure Hours and Clinics are parsed as integers, defaulting to 0
                             obj[internalKey] = parseInt(value, 10) || 0;
                         } else {
                             obj[internalKey] = value;
@@ -350,44 +324,37 @@
                         return obj;
                     }, {});
 
-                    // Only process staff who have recorded working hours (> 0)
                     if (row.Hours <= 0) return;
 
                     const dateKey = row.Date + "_" + row.Department;
                     departmentsSet.add(row.Department);
 
                     if (!aggregatedData[dateKey]) {
-                        
-                        // Robustly extract the numeric day for sorting.
                         let dayNumber = NaN;
                         const dateString = row.Date;
-                        const separator = dateString.includes('-') ? '-' : (dateString.includes('/') ? '/' : null);
-                        
+                        const separator = dateString.includes('-') ? '-' :
+                                         (dateString.includes('/') ? '/' : null);
+
                         if (separator) {
                             const parts = dateString.split(separator);
                             if (parts.length === 3) {
-                                // Assume YYYY-MM-DD (day is index 2) if '-' is used (matching visual output)
-                                // Assume D/M/Y (day is index 0) if '/' is used (matching a common CSV format)
                                 const dayIndex = (separator === '-') ? 2 : 0;
                                 dayNumber = parseInt(parts[dayIndex], 10);
                             }
                         }
 
-                        // Use the successfully extracted dayNumber for sorting
                         aggregatedData[dateKey] = {
                             date: row.Date,
                             dayName: row.DayName,
                             department: row.Department,
-                            dayNumber: dayNumber, 
+                            dayNumber: dayNumber,
                             staff: { consultants: [], specialists: [], residents: [] }
                         };
                     }
-                    
+
                     const staffTypeKey = row.StaffType.toLowerCase() + 's';
-                    
-                    // Push the staff member 
                     if (aggregatedData[dateKey].staff[staffTypeKey]) {
-                         aggregatedData[dateKey].staff[staffTypeKey].push({
+                        aggregatedData[dateKey].staff[staffTypeKey].push({
                             name: row.Name,
                             contract: row.Contract,
                             hours: row.Hours,
@@ -397,86 +364,57 @@
                 });
 
                 scheduleData = Object.values(aggregatedData);
-                
-                // 3. Sort the aggregated data chronologically by dayNumber
-                scheduleData.sort((a, b) => a.dayNumber - b.dayNumber);
-                
-                // 4. Update Departments List
-                departmentSelect.innerHTML = ''; 
 
+                scheduleData.sort((a, b) => a.dayNumber - b.dayNumber);
+
+                departmentSelect.innerHTML = '';
                 const sortedDepartments = Array.from(departmentsSet).sort();
+
                 if (sortedDepartments.length === 0) {
-                     scheduleList.innerHTML = `<p class="text-center text-gray-500 mt-10">No valid department data found in 'data.csv'. Please check the file content.</p>`;
-                     return;
+                    scheduleList.innerHTML = `<p class="text-center text-gray-500 mt-10">No valid department data found.</p>`;
+                    return;
                 }
-                
+
                 sortedDepartments.forEach((dept, index) => {
                     const option = document.createElement('option');
                     option.value = dept;
                     option.textContent = dept;
-                    if (index === 0) option.selected = true; 
+                    if (index === 0) option.selected = true;
                     departmentSelect.appendChild(option);
                 });
-                
-                // 5. Render the initial view
+
                 renderSchedule(departmentSelect.value);
 
             } catch (error) {
                 console.error("Error parsing CSV data:", error);
-                scheduleList.innerHTML = `<p class="text-center text-red-500 mt-10">Error parsing data: Check for correct comma separation in 'data.csv'. Error: ${error.message}</p>`;
+                scheduleList.innerHTML = `<p class="text-center text-red-500 mt-10">Error parsing data.</p>`;
             }
         }
 
-
-        // Function to fetch and process CSV data from the file using XHR
         function loadData(csvFilePath) {
             const scheduleList = document.getElementById('schedule-list');
             scheduleList.innerHTML = `<p id="loading-message" class="text-center text-gray-500 mt-10">Loading schedule data from data.csv...</p>`;
 
             const xhr = new XMLHttpRequest();
-            xhr.open('GET', csvFilePath, true); 
-            
+            xhr.open('GET', csvFilePath, true);
+
             xhr.onload = function() {
                 if (xhr.status === 200 || (xhr.status === 0 && xhr.responseText)) {
                     processCSV(xhr.responseText);
                 } else {
-                    console.error(`Error loading or accessing CSV file. Status: ${xhr.status}`);
-                    scheduleList.innerHTML = `
-                        <div class="mt-10 p-6 bg-red-100 border-l-4 border-red-500 text-red-700 rounded-lg max-w-lg mx-auto">
-                            <p class="font-bold mb-2">Failed to load 'data.csv' (Load Status: ${xhr.status})</p>
-                            <p class="text-sm">
-                                This typically happens when viewing <code>index.html</code> directly on your local computer due to browser security (Same-Origin Policy).
-                            </p>
-                            <p class="text-sm font-semibold mt-2">
-                                ✅ The good news: This code WILL work perfectly once uploaded to GitHub Pages or any web server!
-                            </p>
-                        </div>
-                    `;
+                    scheduleList.innerHTML = `<div class="mt-10 p-6 bg-red-100 border-l-4 border-red-500 text-red-700 rounded-lg">Failed to load data.csv</div>`;
                 }
             };
-            
+
             xhr.onerror = function() {
-                console.error("Network or file access error during CSV load.");
-                scheduleList.innerHTML = `
-                    <div class="mt-10 p-6 bg-red-100 border-l-4 border-red-500 text-red-700 rounded-lg max-w-lg mx-auto">
-                        <p class="font-bold mb-2">Error accessing 'data.csv'.</p>
-                        <p class="text-sm">
-                            This is often due to browser security restrictions on local files. The code will work on a web server.
-                        </p>
-                        <p class="text-sm font-semibold mt-2">
-                            Suggestion: Use a local web server (e.g., 'python3 -m http.server').
-                        </p>
-                    </div>
-                `;
+                scheduleList.innerHTML = `<div class="mt-10 p-6 bg-red-100 border-l-4 border-red-500 text-red-700 rounded-lg">Error loading CSV</div>`;
             };
 
             xhr.send();
         }
 
-
         document.addEventListener('DOMContentLoaded', () => {
-            
-            // 3. Handle Card Expansion (Accordion Logic)
+
             document.getElementById('schedule-list').addEventListener('click', (event) => {
                 const header = event.target.closest('.card-header');
                 if (!header) return;
@@ -484,10 +422,8 @@
                 const container = header.closest('.card-container');
                 const detailContent = document.getElementById(header.dataset.cardId);
 
-                // Check if already expanded
                 const isExpanded = container.classList.contains('expanded');
 
-                // Close all other expanded cards
                 document.querySelectorAll('.card-container.expanded').forEach(openCard => {
                     if (openCard !== container) {
                         openCard.classList.remove('expanded');
@@ -497,25 +433,21 @@
                 });
 
                 if (isExpanded) {
-                    // Collapse the current card
                     container.classList.remove('expanded');
                     detailContent.setAttribute('aria-hidden', 'true');
                     header.setAttribute('aria-expanded', 'false');
                 } else {
-                    // Expand the current card
                     container.classList.add('expanded');
                     detailContent.setAttribute('aria-hidden', 'false');
                     header.setAttribute('aria-expanded', 'true');
                 }
             });
 
-            // Handle Department Selection Change
             const departmentSelect = document.getElementById('department-select');
             departmentSelect.addEventListener('change', (event) => {
                 renderSchedule(event.target.value);
             });
-            
-            // Initial data load and rendering
+
             loadData('data.csv');
         });
     </script>
